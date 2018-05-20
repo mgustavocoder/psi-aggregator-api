@@ -28,6 +28,8 @@ public class App
 
         after((request, response) -> response.header("Content-Type", "application/json"));
 
+        after(((request, response) -> response.header("Access-Control-Allow-Origin","*")));
+
         new WebsiteCtrl();
         new PageSpeedCtrl();
 

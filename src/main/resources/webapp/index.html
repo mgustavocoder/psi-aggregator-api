@@ -1,0 +1,475 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en" ng-app="sortApp" ng-cloak>
+<head>
+    <meta charset="UTF-8">
+    <title>PageSpeed Insights Aggregator</title>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script></head>
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-animate.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-sanitize.js"></script>
+    <script src="https://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-2.5.0.js"></script>
+
+
+    <script src="app.js"></script>
+
+<style>
+  body {
+   padding-top:50px;
+   text-align: center;
+   font-family: sans-serif;
+   font-size: 12px;
+
+  }
+
+  td, th {
+    padding: 6px !important;
+    vertical-align: middle !important;
+  }
+
+  .container {
+    padding-right: 0px;
+    padding-left: 0px;
+  }
+</style>
+
+<style>
+/* Center the loader */
+#loader {
+  position: absolute;
+  left: 50%;
+  top: 37px;
+  z-index: 2;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px dashed #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px dotted #28a745;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Add animation to "page content" */
+.animate-bottom {
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 1s
+}
+
+@-webkit-keyframes animatebottom {
+  from { bottom:-100px; opacity:0 }
+  to { bottom:0px; opacity:1 }
+}
+
+@keyframes animatebottom {
+  from{ bottom:-100px; opacity:0 }
+  to{ bottom:0; opacity:1 }
+}
+
+#myDiv {
+  display: none;
+  text-align: center;
+}
+</style>
+
+</head>
+<body>
+    <div class="container" ng-controller="mainController">
+
+        <nav class="navbar navbar-dark bg-primary">
+            <p class="navbar-brand">{{ title }}</p>
+        </nav>
+
+
+        <div class="row">
+            <div class="col-sm-12 col-lg-12">
+                <form >
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-search"></i></div>
+                            <input type="text" class="form-control" placeholder="Search" ng-model="searchFish">
+                        </div>
+                    </div>
+                </form>
+
+
+                <ul ng-if="pages" class="nav nav-pills" id="myTab" role="tablist">
+                    <li ng-click="refresh('mobile')" class="nav-item">
+                        <a class="nav-link active" id="home-tab" data-toggle="tab">Mobile</a>
+                    </li>
+                    <li ng-click="refresh('desktop')" class="nav-item">
+                        <a class="nav-link" id="profile-tab" data-toggle="tab">Desktop</a>
+                    </li>
+                </ul>
+
+                <div ng-show="loading" id="loader"></div>
+
+
+                <div ng-show="noUrl">
+                    <div class="alert alert-warning animate-bottom" role="alert">
+                        <strong>Warning!</strong> Please inform the URL you want retrieve data in the anchor parameter and reload this page.
+                        <h5>Examples</h5>
+                        <ul style="font-size: 14px; list-style-type: none;">
+                            <li><a target="_blank" href="{{origin}}#https://www.havaianas.com.br">{{origin}}#https://www.havaianas.com.br</a></li>
+                            <li><a target="_blank" href="{{origin}}#https://www.jnjbrasil.com.br">{{origin}}#https://www.jnjbrasil.com.br</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div ng-show="error">
+                    <div class="alert alert-danger animate-bottom" role="alert">
+                        <p>Status: {{error.status}}</p>
+                        <p>{{error.data}}</p>
+                    </div>
+                </div>
+
+                <table ng-if="pages" class="table table-bordered table-striped animate-bottom">
+                    <thead>
+                        <tr>
+                        <td>
+                            <a href="#" ng-click="sortType = 'title'; sortReverse = !sortReverse">
+                                Title
+                                <span ng-show="sortType == 'title' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'title' && sortReverse" class="fa fa-caret-up"></span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" ng-click="sortType = 'evaluatedUrl'; sortReverse = !sortReverse">
+                                URL
+                                <span ng-show="sortType == 'evaluatedUrl' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'evaluatedUrl' && sortReverse" class="fa fa-caret-up"></span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" ng-click="sortType = 'loadingExperience'; sortReverse = !sortReverse">
+                                Speed
+                                <span ng-show="sortType == 'loadingExperience' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'loadingExperience' && sortReverse" class="fa fa-caret-up"></span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" ng-click="sortType = 'score'; sortReverse = !sortReverse">
+                                Score
+                                <span ng-show="sortType == 'score' && !sortReverse" class="fa fa-caret-down"></span>
+                                <span ng-show="sortType == 'score' && sortReverse" class="fa fa-caret-up"></span>
+                            </a>
+                        </td>
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.AvoidLandingPageRedirects.ruleImpact'; sortReverse = !sortReverse">
+                                    Avoid redirects
+                                    <span ng-show="sortType == 'ruleResults.AvoidLandingPageRedirects.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.AvoidLandingPageRedirects.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.EnableGzipCompression.ruleImpact'; sortReverse = !sortReverse">
+                                    GZIP
+                                    <span ng-show="sortType == 'ruleResults.EnableGzipCompression.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.EnableGzipCompression.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.LeverageBrowserCaching.ruleImpact'; sortReverse = !sortReverse">
+                                    Browser Caching
+                                    <span ng-show="sortType == 'ruleResults.LeverageBrowserCaching.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.LeverageBrowserCaching.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.MinifyHTML.ruleImpact'; sortReverse = !sortReverse">
+                                    Minify HTML
+                                    <span ng-show="sortType == 'ruleResults.MinifyHTML.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.MinifyHTML.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.MinifyJavaScript.ruleImpact'; sortReverse = !sortReverse">
+                                    Minify JavaScript
+                                    <span ng-show="sortType == 'ruleResults.MinifyJavaScript.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.MinifyJavaScript.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.MinifyCss.ruleImpact'; sortReverse = !sortReverse">
+                                    Minify CSS
+                                    <span ng-show="sortType == 'ruleResults.MinifyCss.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.MinifyCss.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.PrioritizeVisibleContent.ruleImpact'; sortReverse = !sortReverse">
+                                    Prioritize visible content
+                                    <span ng-show="sortType == 'ruleResults.PrioritizeVisibleContent.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.PrioritizeVisibleContent.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.MainResourceServerResponseTime.ruleImpact'; sortReverse = !sortReverse">
+                                    Server Response Time
+                                    <span ng-show="sortType == 'ruleResults.MainResourceServerResponseTime.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.MainResourceServerResponseTime.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.OptimizeImages.ruleImpact'; sortReverse = !sortReverse">
+                                    Optimize Images
+                                    <span ng-show="sortType == 'ruleResults.OptimizeImages.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.OptimizeImages.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+
+                            <td>
+                                <a href="#" ng-click="sortType = 'ruleResults.MinimizeRenderBlockingResources.ruleImpact'; sortReverse = !sortReverse">
+                                    Render-blocking
+                                    <span ng-show="sortType == 'ruleResults.MinimizeRenderBlockingResources.ruleImpact' && !sortReverse" class="fa fa-caret-down"></span>
+                                    <span ng-show="sortType == 'ruleResults.MinimizeRenderBlockingResources.ruleImpact' && sortReverse" class="fa fa-caret-up"></span>
+                                </a>
+                            </td>
+
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="page in pages | orderBy:sortType:sortReverse | filter:searchFish">
+                            <td ng-click="open(page, 'stats')" style="cursor: pointer;" title="Click to view details">{{ page.title }}</td>
+                            <td><a target="_blank" href="{{page.evaluatedUrl}}">{{ page.evaluatedUrl }}</a></td>
+                            <td ng-click="open(page, 'speed')" style="cursor: pointer;" title="Click to view details"><span class="label label-{{ page.loadingExperience === 'FAST' ? 'success' : (page.loadingExperience === 'AVERAGE' ? 'warning' : 'danger') }}">{{ page.loadingExperience }}</span></td>
+                            <td ng-click="open(page, 'score')" style="cursor: pointer;" title="Click to view details"><span class="label label-{{ page.score > 79 ? 'success' : (page.score > 59 ? 'warning' : 'danger') }}">{{ page.score }}</span></td>
+                            <td>{{ page.ruleResults.AvoidLandingPageRedirects.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.EnableGzipCompression.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.LeverageBrowserCaching.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.MinifyHTML.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.MinifyJavaScript.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.MinifyCss.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.PrioritizeVisibleContent.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.MainResourceServerResponseTime.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.OptimizeImages.ruleImpact }}</td>
+                            <td>{{ page.ruleResults.MinimizeRenderBlockingResources.ruleImpact }}</td>
+                        </tr>
+                    </tbody>
+            </table>
+            </div>
+
+            <div class="modal-demo">
+
+                <script type="text/ng-template" id="myModalContent.html">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="modal-title">{{ $ctrl.page.title }}</h3>
+                    </div>
+                    <div class="modal-body" id="modal-body">
+
+                            <div ng-show="$ctrl.page.mode === 'stats'" class="row">
+                                <div class="col-sm">
+                                    <h4>{{ $ctrl.page.strategy }} stats</h4>
+                                    <p><strong>Render Blocking Round Trips: {{ $ctrl.page.pageStats.numRenderBlockingRoundTrips }} </strong> </p>
+                                    <p><strong>Number of resources: {{ $ctrl.page.pageStats.numberResources }} </strong></p>
+                                    <p>Number of hosts: {{ $ctrl.page.pageStats.numberHosts }}</p>
+                                    <p>Total request bytes: {{ $ctrl.page.pageStats.totalRequestBytes }}</p>
+                                    <p>Number of static resources: {{ $ctrl.page.pageStats.numberStaticResources }}</p>
+                                    <p>HTML response bytes: {{ $ctrl.page.pageStats.htmlResponseBytes }}</p>
+                                    <p>Text response bytes: {{ $ctrl.page.pageStats.textResponseBytes }}</p>
+                                    <p>Over the wire response bytes: {{ $ctrl.page.pageStats.overTheWireResponseBytes }}</p>
+                                    <p>CSS response bytes: {{ $ctrl.page.pageStats.cssResponseBytes }}</p>
+                                    <p>Image response bytes: {{ $ctrl.page.pageStats.imageResponseBytes }}</p>
+                                    <p>Javascript response bytes: {{ $ctrl.page.pageStats.javascriptResponseBytes }}</p>
+                                    <p>Other response bytes: {{ $ctrl.page.pageStats.otherResponseBytes }}</p>
+                                    <p>Javascript resources: {{ $ctrl.page.pageStats.numberJsResources }}</p>
+                                    <p>CSS resources: {{ $ctrl.page.pageStats.numberCssResources }}</p>
+                                    <p>Total round trips: {{ $ctrl.page.pageStats.numTotalRoundTrips }}</p>
+                                </div>
+                                <div class="col-sm">
+                                    <div class="alert alert-primary" role="alert">
+                                        The median page requires 4 render-blocking round trips and ~75 resources (1MB) to load. Fewer round trips and bytes results in faster pages.
+                                    </div>
+                                </div>
+                            </div>
+
+                        <div ng-show="$ctrl.page.mode === 'score'">
+                            <h5>About Score</h5>
+                            <p>
+                                PageSpeed Insights evaluates how well a page follows <a target="_blank" href="https://developers.google.com/speed/docs/insights/rules">common performance best practices</a> and computes a score from <strong>0-100</strong> that estimates its performance headroom. It evaluates if a page can improve its performance in two areas:
+                            </p>
+                            <ul>
+                                <li><em><strong>time to above-the-fold load</strong></em>: Elapsed time from the moment a user requests a new page to the moment the above-the-fold content is rendered by the browser.</li>
+                                <li><em><strong>time to full page load</strong></em>: Elapsed time from the moment a user requests a new page to the moment the page is fully rendered by the browser.</li>
+                            </ul>
+                            <div class="row">
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-success mb-1" >
+                                        <div class="card-header">Good</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The page applies most performance best practices and there is little headroom for further optimization. The page scores 80 or above.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-warning mb-1" >
+                                        <div class="card-header">Medium</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The page is missing some common performance optimizations and there is medium headroom for optimization. The page scores between 60 and 79.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-danger mb-1" >
+                                        <div class="card-header">Low</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The page is not optimized and there is fairly large headroom for optimization. The page scores between 0 and 59.</p>&nbsp;&nbsp;&nbsp;
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div ng-show="$ctrl.page.mode === 'speed'">
+                            <h5>About Speed</h5>
+                            <p>
+                                PageSpeed Insights incorporates data from the <a target="_blank" href="https://developers.google.com/web/tools/chrome-user-experience-report/">Chrome User Experience Report</a> (CrUX) to display real-world performance data about a page. PSI reports two <a target="_blank" href="https://developers.google.com/web/tools/chrome-user-experience-report/#metrics">metrics</a>: First Contentful Paint (FCP) and DOMContentLoaded (DCL).
+                            </p>
+                            <p>
+                                The median value for each metric (FCP or DCL) is compared to all the pages monitored by the CrUX report. Each metric is assigned a category, depending on where it falls in the distribution:
+                            </p>
+                            <div class="row">
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-success mb-1" >
+                                        <div class="card-header">Fast</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The median value of the metric is in the fastest third of all page loads.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-warning mb-1" >
+                                        <div class="card-header">Average</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The median value of the metric is in the middle third of all page loads.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-sm-12">
+                                    <div class="card text-white bg-danger mb-1">
+                                        <div class="card-header">Slow</div>
+                                        <div class="card-body">
+                                            <p class="card-text">The median value of the metric is in the slowest third of all page loads.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-show="$ctrl.page.mode === 'faq'">
+                            <div class="devsite-article-body clearfix" itemprop="articleBody">
+                                <h5>Frequently Asked Questions</h5>
+
+                                <ol class="toc">
+                                    <li><a href="#whyonlinestale">I changed my site! Why did the Speed or Optimization score not change?</a></li>
+                                    <li><a href="#speedscoreunavailable">Why am I not seeing any speed data for a URL?</a></li>
+                                    <li><a href="#difftocrux">How does this differ from the Chrome User Experience Report?</a></li>
+                                    <li><a href="#speedmetrics">Why does PSI use FCP and DCL? Which one is the most important?</a></li>
+                                    <li><a href="#optimizationssource">Where do the PageSpeed Insights performance optimizations come from?</a></li>
+                                    <li><a href="#scoreandexperience">Should I implement all of the optimization recommendations?</a></li>
+                                    <li><a href="#captcha">Why am I seeing a captcha?</a></li>
+                                </ol>
+                                <dl>
+                                    <dt id="whyonlinestale">I changed my site! Why did the Speed or Optimization score not change?</dt>
+                                    <dd>The speed data shown in PSI is not updated in real-time. The reported metrics reflect the user experience over the trailing thirty days and are updated weekly. For the Optimization score, PageSpeed Insights caches results for a short period of time and any changes you've made to implement suggested optimizations should be recognized within a few minutes.
+                                    </dd>
+                                    <dt id="speedscoreunavailable">Why am I not seeing any speed data for a URL?</dt>
+                                    <dd>PSI uses data from the <a target="_blank" href="https://developers.google.com/web/tools/chrome-user-experience-report/">Chrome User Experience Report</a>, which provides speed data for popular URLs that are known by Google's web crawlers. If the speed data for the queried URL is not available in the CrUX dataset, we recommend using Lighthouse to run a <a target="_blank" href="https://developers.google.com/web/tools/lighthouse/">synthetic performance audit</a> to estimate page speed, and investigate page optimization recommendations provided by PSI and Lighthouse.</dd>
+                                    <dt id="difftocrux">How does this differ from the Chrome User Experience Report?</dt>
+                                    <dd>PageSpeed Insights incorporates data from the <a target="_blank" href="https://developers.google.com/web/tools/chrome-user-experience-report/">Chrome User Experience Report</a> to provide real-world performance information for sites, as captured by FCP and DCL. The performance data in both CrUX and PSI is generated by real users in the wild and represents how users experience the web.</dd>
+                                    <dt id="speedmetrics">Why does PSI use FCP and DCL? Which one is the most important?</dt>
+                                    <dd>First Contentful Paint (FCP) measures when a user sees a visual response from the page. Faster times are more likely to <a href="https://developers.google.com/web/fundamentals/performance/rail">keep users engaged</a>. DOM Content Loaded (DCL) measures when HTML document has been loaded and parsed. Faster times have been shown to correlate with <a target="_blank" href="https://www.thinkwithgoogle.com/marketing-resources/experience-design/mobile-page-speed-load-time/">lower bounce rates</a>. We encourage you to look at a <a target="_blank" href="https://developers.google.com/web/updates/2017/06/user-centric-performance-metrics">variety of metrics</a>, including FCP and DCL to understand the performance of your page.</dd>
+                                    <dt id="optimizationssource">Where do the PageSpeed Insights performance optimizations come from?</dt>
+                                    <dd>PageSpeed Insights uses a variety of <a target="_blank" href="https://developers.google.com/web/fundamentals/performance/critical-rendering-path/">best practices</a> from the web performance community. The optimization analysis fetches a site with a Blink renderer (the rendering engine that powers Google Chrome) that emulates both mobile and desktop devices.</dd>
+                                    <dt id="scoreandexperience">Should I implement all of the optimization recommendations?</dt>
+                                    <dd>Since PageSpeed is a performance optimization tool, its recommendations are biased in favor of speed. However, we recognize that web development is complex, and our suggestions might be restrictive for an individual web site. You have to consider the tradeoffs for your own application: some of PageSpeed's recommendations take substantial effort to implement, so you need to evaluate the cost of making changes vs. the benefit the rule would have on your page. Our goal is simply to point out the issues that you should consider fixing.</dd>
+                                    <dt id="captcha">Why am I seeing a captcha?</dt>
+                                    <dd>PageSpeed Insights may occasionally show a captcha to confirm you are not a bot. If you are encountering a captcha when using the API, it may be due to the fact that you are using a shared API key. You can acquire an individual API Key by following <a target="_blank" href="https://support.google.com/cloud/answer/6158862">these instructions</a>.</dd>
+                                </dl>
+
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <a ng-show="$ctrl.page.mode === 'stats'" target="_blank" href="https://developers.google.com/speed/pagespeed/insights/?url={{$ctrl.page.evaluatedUrl}}&strategy={{ $ctrl.page.strategy }}">
+                            Run In Insights
+                        </a>
+
+                        <a ng-show="$ctrl.page.mode === 'score'" target="_blank" href="https://developers.google.com/speed/docs/insights/about#optimization-score">
+                            See more
+                        </a>
+
+
+                        <a ng-show="$ctrl.page.mode === 'speed'" target="_blank" href="https://developers.google.com/speed/docs/insights/about#speed-score">
+                            See more
+                        </a>
+
+                        <a ng-show="$ctrl.page.mode === 'faq'" target="_blank" href="https://developers.google.com/speed/docs/insights/faq">
+                            See more
+                        </a>
+                    </div>
+                </script>
+
+                <div class="modal-parent">
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <nav class="navbar navbar-light bg-light">
+            <ul style="font-size: 14px; list-style-type: none;">
+                <li><a href="#" ng-click="open({}, 'faq')">FAQ</a></li>
+                <li><p>Made with <i class="fa fa-heart"></i> and <i class="fa fa-coffee"></i> by <a href="https://github.com/mgustavocoder/hard-worker-activity-stream" target="_blank">MGustavo Coder</a></p></li>
+            </ul>
+        </nav>
+
+
+
+
+</div>
+
+
+
+
+</body>
+</html>
